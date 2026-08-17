@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { config } from '../config';
+import { notify } from '../services/notifications';
+import { setUnauthorizedHandler } from '../services/api';
 
 interface AuthContextType {
   currentUser: User;
@@ -53,6 +55,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(currentUser));
   }, [currentUser]);
 
+  useEffect(() => {
+    setUnauthorizedHandler(() => () => {
+      logout();
+      notify.error(
+        'Session Expired',
+        'Your session has expired. Please sign in again.'
+      );
+    });
+    return () => {
+      setUnauthorizedHandler(() => {});
+    };
+  }, []);
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch(`${config.apiBaseUrl}/auth/login`, {
@@ -63,15 +78,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const result = await response.json();
       if (!result.success) {
+        const message =
+          result.message || 'Invalid credentials. Please try again.';
+        notify.error('Authentication Failed', message);
         return false;
       }
 
       localStorage.setItem('ntc_auth_token_v1', result.token);
       setCurrentUser(result.user);
       setIsAuthenticated(true);
+      notify.success(
+        'Welcome Back',
+        `Signed in as ${result.user.name} (${result.user.role})`
+      );
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      notify.error(
+        'Authentication Failed',
+        error.message || 'Unable to reach the authentication server.'
+      );
       return false;
     }
   };
@@ -98,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         canViewAuditLogs: true,
       },
     });
+    notify.info('Signed Out', 'You have been securely logged out.');
   };
 
   const switchRole = (role: UserRole) => {

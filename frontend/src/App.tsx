@@ -18,7 +18,7 @@ import { ToastContainer } from './components/ToastContainer';
 
 const MainAppContent: React.FC = () => {
   const { isAuthenticated } = useAuth();
-  const { currentView, toasts, removeToast } = useProperty();
+  const { currentView } = useProperty();
   const [hasCompletedIntro, setHasCompletedIntro] = useState<boolean>(() => {
     return sessionStorage.getItem('ntc_splash_shown') === 'true';
   });
@@ -40,7 +40,7 @@ const MainAppContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-100 dark:bg-[#070A0F] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 overflow-y-auto">
         <LoginView />
-        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <ToastContainer />
       </div>
     );
   }
@@ -64,8 +64,8 @@ const MainAppContent: React.FC = () => {
         />
 
         {/* Main Page Content Canvas - Independent Scroll */}
-        <main 
-          id="main-content-canvas" 
+        <main
+          id="main-content-canvas"
           className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 overscroll-contain focus:outline-none"
           tabIndex={-1}
         >
@@ -84,7 +84,7 @@ const MainAppContent: React.FC = () => {
       <ReceiptModal />
       <SpotlightTour />
       <ProjectGuidelineModal />
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ToastContainer />
     </div>
   );
 };
@@ -98,3 +98,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

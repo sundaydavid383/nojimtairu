@@ -8,9 +8,10 @@ import {
   PaymentStatus,
   PropertyType 
 } from '../types';
-import { propertyApi, activityApi, staffApi, computeDashboardStats } from '../services/api';
+import { propertyApi, activityApi, staffApi, computeDashboardStats, getApiErrorMessage, getApiErrorTitle } from '../services/api';
 import { config } from '../config';
 import { useAuth } from './AuthContext';
+import { notify } from '../services/notifications';
 
 export interface ToastNotification {
   id: string;
@@ -53,7 +54,7 @@ interface PropertyContextType {
   typeFilter: PropertyType | 'all';
   setTypeFilter: (type: PropertyType | 'all') => void;
   sortBy: 'latest' | 'oldest' | 'amount_high' | 'amount_low' | 'name';
-  setSortBy: (sort: 'latest' | 'oldest' | 'amount_high' | 'amount_low' | 'name') => void;
+  setSortBy: (sortBy: 'latest' | 'oldest' | 'amount_high' | 'amount_low' | 'name') => void;
   viewMode: 'table' | 'grid';
   setViewMode: (mode: 'table' | 'grid') => void;
 
@@ -205,19 +206,25 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentView]);
 
-  // Toasts
+  // Toasts - delegate to centralized notification service
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
 
   const addToast = useCallback((type: ToastNotification['type'], title: string, message: string) => {
-    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    setToasts((prev) => [...prev, { id, type, title, message }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
+    const id = notify.show(type, title, message);
+    setToasts(notify.getToasts());
+    return id;
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    notify.dismiss(id);
+    setToasts(notify.getToasts());
+  }, []);
+
+  // Keep local toast state in sync with the notification service
+  useEffect(() => {
+    return notify.subscribe((updated) => {
+      setToasts(updated);
+    });
   }, []);
 
   // Fetch initial data
@@ -235,13 +242,13 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setStaffMembers(staff);
     } catch (err: any) {
       console.error('Failed to load initial property data:', err);
-      const message = err.message || 'Could not retrieve records from server.';
+      const message = getApiErrorMessage(err);
       setError(message);
-      addToast('error', 'Data Load Error', message);
+      notify.error('Data Load Error', message);
     } finally {
       setIsLoading(false);
     }
-  }, [addToast]);
+  }, []);
 
   const retryLoad = useCallback(async () => {
     await refreshData();
@@ -312,10 +319,11 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const created = await propertyApi.createProperty(data, currentUser);
       await refreshData();
-      addToast('success', 'File Opened', `Successfully created ${created.fileNumber} for ${created.clientName}`);
+      notify.success('File Opened', `Successfully created ${created.fileNumber} for ${created.clientName}`);
       return created;
     } catch (err: any) {
-      addToast('error', 'Creation Error', err.message || 'Failed to create property file');
+      const message = getApiErrorMessage(err);
+      notify.error('Creation Error', message);
       throw err;
     }
   };
@@ -324,10 +332,11 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const updated = await propertyApi.updateProperty(id, updates, currentUser);
       await refreshData();
-      addToast('success', 'Record Updated', `Successfully updated records for ${updated.fileNumber}`);
+      notify.success('Record Updated', `Successfully updated records for ${updated.fileNumber}`);
       return updated;
     } catch (err: any) {
-      addToast('error', 'Update Error', err.message || 'Failed to update property record');
+      const message = getApiErrorMessage(err);
+      notify.error('Update Error', message);
       throw err;
     }
   };
@@ -340,10 +349,11 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setCurrentView('properties');
       }
       await refreshData();
-      addToast('info', 'Record Archived', 'Property file has been permanently removed from active ledger.');
+      notify.info('Record Archived', 'Property file has been permanently removed from active ledger.');
       return success;
     } catch (err: any) {
-      addToast('error', 'Deletion Error', err.message || 'Failed to delete property file');
+      const message = getApiErrorMessage(err);
+      notify.error('Deletion Error', message);
       throw err;
     }
   };
@@ -352,12 +362,13 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const { property, payment } = await propertyApi.recordPayment(propertyId, paymentData, currentUser);
       await refreshData();
-      addToast('success', 'Payment Logged', `Payment of ₦${payment.amount.toLocaleString()} registered (Receipt: ${payment.receiptNumber})`);
+      notify.success('Payment Logged', `Payment of ₦${payment.amount.toLocaleString()} registered (Receipt: ${payment.receiptNumber})`);
       
       // Auto open receipt for quick preview/print
       viewReceipt(payment, property);
     } catch (err: any) {
-      addToast('error', 'Payment Error', err.message || 'Failed to record payment');
+      const message = getApiErrorMessage(err);
+      notify.error('Payment Error', message);
       throw err;
     }
   };
@@ -366,17 +377,24 @@ export const PropertyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const updated = await staffApi.updateStaff(id, updates, currentUser);
       await refreshData();
-      addToast('success', 'Staff Permissions Updated', `Permissions updated for ${updated.name}`);
+      notify.success('Staff Permissions Updated', `Permissions updated for ${updated.name}`);
     } catch (err: any) {
-      addToast('error', 'Staff Update Error', err.message || 'Failed to update staff member');
+      const message = getApiErrorMessage(err);
+      notify.error('Staff Update Error', message);
       throw err;
     }
   };
 
   const resetDemoData = async (): Promise<void> => {
-    await propertyApi.resetDemoData();
-    await refreshData();
-    addToast('info', 'Demo Reset', 'Default property portfolio and audit data restored.');
+    try {
+      await propertyApi.resetDemoData();
+      await refreshData();
+      notify.info('Demo Reset', 'Default property portfolio and audit data restored.');
+    } catch (err: any) {
+      const message = getApiErrorMessage(err);
+      notify.error('Reset Failed', message);
+      throw err;
+    }
   };
 
   const openPaymentModal = (property: Property) => {
