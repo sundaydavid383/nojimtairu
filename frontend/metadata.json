@@ -1,0 +1,6 @@
+{
+  "name": "Nojim Tairu & Co. - Property & Payment Records",
+  "description": "Internal legal property and payment records management system for law firm Nojim Tairu & Co.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

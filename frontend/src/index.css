@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, [data-theme="dark"], .dark *, [data-theme="dark"] *));
+
+@layer base {
+  :root {
+    /* Fonts */
+    --font-serif-heading: 'Cinzel', 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --font-sans-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono-code: 'JetBrains Mono', 'Courier New', monospace;
+
+    /* Theme Colors - Light / Classic Chambers (Default) */
+    --color-primary: #0e1b2e;
+    --color-primary-hover: #162a47;
+    --color-primary-light: #f0f4f9;
+    --color-primary-dark: #070d17;
+    
+    --color-accent: #996515;
+    --color-accent-gold: #b8860b;
+    --color-accent-hover: #80530d;
+    --color-accent-light: #fdf8ed;
+    --color-accent-border: #e6cb85;
+    --color-accent-muted: #996515;
+
+    --color-background: #f8f9fb;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f1f4f8;
+    --color-surface-hover: #f7f9fc;
+    
+    --color-border: #e2e6ed;
+    --color-border-subtle: #edf0f5;
+    --color-border-strong: #cbd5e1;
+
+    --color-text: #0f172a;
+    --color-text-secondary: #334155;
+    --color-text-muted: #64748b;
+    --color-text-inverse: #ffffff;
+
+    --color-success: #15803d;
+    --color-success-bg: #f0fdf4;
+    --color-success-border: #bbf7d0;
+
+    --color-warning: #b45309;
+    --color-warning-bg: #fffbeb;
+    --color-warning-border: #fde68a;
+
+    --color-danger: #b91c1c;
+    --color-danger-bg: #fef2f2;
+    --color-danger-border: #fecaca;
+
+    --color-info: #1d4ed8;
+    --color-info-bg: #eff6ff;
+    --color-info-border: #bfdbfe;
+
+    --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.05);
+    --shadow-elevated: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  }
+
+  [data-theme="dark"], .dark {
+    /* Theme Colors - Dark Luxury Chambers (Optional Toggle) */
+    --color-primary: #1e293b;
+    --color-primary-hover: #334155;
+    --color-primary-light: #0f172a;
+    --color-primary-dark: #020617;
+
+    --color-accent: #d4af37;
+    --color-accent-gold: #e5c158;
+    --color-accent-hover: #c49d28;
+    --color-accent-light: #1f1a0a;
+    --color-accent-border: #634e19;
+    --color-accent-muted: #d4af37;
+
+    --color-background: #0b0f17;
+    --color-surface: #111827;
+    --color-surface-muted: #1f2937;
+    --color-surface-hover: #1e293b;
+
+    --color-border: #2d3748;
+    --color-border-subtle: #1e293b;
+    --color-border-strong: #4b5563;
+
+    --color-text: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-inverse: #0f172a;
+
+    --color-success: #22c55e;
+    --color-success-bg: #052e16;
+    --color-success-border: #166534;
+
+    --color-warning: #f59e0b;
+    --color-warning-bg: #451a03;
+    --color-warning-border: #92400e;
+
+    --color-danger: #ef4444;
+    --color-danger-bg: #450a0a;
+    --color-danger-border: #991b1b;
+
+    --color-info: #3b82f6;
+    --color-info-bg: #172554;
+    --color-info-border: #1e40af;
+
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    --shadow-elevated: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+  }
+
+  body {
+    font-family: var(--font-sans-body);
+    background-color: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+  }
+
+  /* Clean sans-serif headings for effortless readability */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans-body);
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+  }
+
+  /* Reserved strictly for official law firm brand title & certified seal stamps */
+  .font-serif-brand, .font-firm-title {
+    font-family: var(--font-serif-heading);
+    letter-spacing: 0.05em;
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono-code);
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Print style for official legal receipts and property dossiers */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
